@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Dental Clinic | Reception & Patient Appointments</title>
+    <meta name="description" content="Front-desk reception dashboard for Nova Dental Clinic displaying scheduled patient appointments, visit times, and Google Calendar sync.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Dental Clinic Dashboard Stylesheet -->
+    <link rel="stylesheet" href="/static/css/dashboard.css?v=dental2">
+</head>
+<body class="dental-theme">
+    <div class="dashboard-layout">
+        <!-- Dental Reception Top Navigation Bar -->
+        <header class="top-nav" id="topNav">
+            <div class="nav-brand">
+                <div class="brand-symbol">
+                    <!-- Dental Tooth / Healthcare Emblem SVG -->
+                    <svg class="tooth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2C8.5 2 6 4 6 7c0 2.5 1 4.5 1.5 7 .5 2.5.5 5.5 1.5 7.5 1 2 2.5 1 3-1 .5-2 0-4.5 0-6.5 0 2-.5 4.5 0 6.5.5 2 2 3 3 1 1-2 1-5 1.5-7.5.5-2.5 1.5-4.5 1.5-7 0-3-2.5-5-6-5Z"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <div class="brand-title-wrap">
+                        <span class="brand-name">NOVA DENTAL</span>
+                        <span class="brand-badge">CLINIC RECEPTION</span>
+                    </div>
+                    <span class="brand-sub">Front-Desk Patient Appointments & Agenda</span>
+                </div>
+            </div>
+
+            <div class="nav-center">
+                <div class="system-status-chip" id="systemStatusChip">
+                    <span class="status-beacon"></span>
+                    <span class="status-text">AI Receptionist (Nova) Active</span>
+                    <span class="status-divider">•</span>
+                    <span class="live-clock" id="liveClockDisplay">--:--:--</span>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <!-- Auto-refresh switch -->
+                <button class="icon-toggle-btn active" id="autoRefreshBtn" title="Toggle 10-second live auto-refresh" aria-label="Toggle auto-refresh">
+                    <svg class="icon spin-icon" id="syncSpinIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                    </svg>
+                    <span class="btn-label" id="autoRefreshLabel">Auto-Refresh: ON</span>
+                </button>
+
+                <!-- Google Calendar Sync Button -->
+                <button class="secondary-btn" id="syncGoogleBtn" title="Sync appointments to Google Calendar">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                        <polyline points="12 12 15 15 18 12"/>
+                    </svg>
+                    <span>Sync Google Calendar</span>
+                </button>
+
+                <!-- Patient Call Activity Drawer Trigger -->
+                <button class="primary-action-btn" id="openActivityBtn" title="View Patient Call Records & Receptionist Notes">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <span>Patient Call Logs (<span id="topCallCountBadge">10</span>)</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="dashboard-main" id="mainContent">
+            <!-- Clinic Reception Hero Header -->
+            <section class="dashboard-hero-header">
+                <div class="hero-title-group">
+                    <div class="hero-pill">
+                        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span id="headerTodayDate">Today is Sunday, October 18, 2026</span>
+                    </div>
+                    <h1 class="hero-heading">Patient Appointments & Clinic Schedule</h1>
+                    <p class="hero-subtext">Live front-desk agenda of patient visits, dental checkups, and consultations booked autonomously by Nova.</p>
+                </div>
+
+                <div class="hero-quick-actions">
+                    <button class="refresh-pill-btn" id="manualRefreshBtn" title="Reload appointment data">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        <span>Refresh Schedule</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- KPI Metric Cards Grid (Dental Reception Theme) -->
+            <section class="kpi-grid" id="kpiStatsGrid" aria-label="Key clinic appointment statistics">
+                <!-- Card 1: Total Patient Appointments -->
+                <div class="kpi-card highlight-teal" id="kpiTotalCard">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Total Scheduled Appointments</span>
+                        <div class="kpi-icon-wrap teal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-value-row">
+                            <span class="kpi-number" id="statTotalMeetings">--</span>
+                            <span class="kpi-badge neutral">All Time</span>
+                        </div>
+                        <p class="kpi-footnote">Patient visits recorded in clinic system</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: Today's Patient Visits -->
+                <div class="kpi-card highlight-sky" id="kpiTodayCard">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Today's Patient Visits</span>
+                        <div class="kpi-icon-wrap sky">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-value-row">
+                            <span class="kpi-number" id="statTodayMeetings">--</span>
+                            <span class="kpi-badge warning" id="statTodayBadge">Active Day</span>
+                        </div>
+                        <p class="kpi-footnote" id="statTodayFootnote">Scheduled on today's clinic calendar</p>
+                    </div>
+                </div>
+
+                <!-- Card 3: Upcoming Consultations -->
+                <div class="kpi-card highlight-emerald" id="kpiUpcomingCard">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Upcoming Consultations</span>
+                        <div class="kpi-icon-wrap emerald">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-value-row">
+                            <span class="kpi-number" id="statUpcomingMeetings">--</span>
+                            <span class="kpi-badge success">Confirmed</span>
+                        </div>
+                        <p class="kpi-footnote">Future dental visits scheduled</p>
+                    </div>
+                </div>
+
+                <!-- Card 4: Google Calendar Synced -->
+                <div class="kpi-card highlight-slate" id="kpiSyncedCard">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Google Calendar Synced</span>
+                        <div class="kpi-icon-wrap slate">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-value-row">
+                            <span class="kpi-number" id="statSyncedMeetings">--</span>
+                            <span class="kpi-badge success" id="statSyncStatusBadge">100% Synced</span>
+                        </div>
+                        <p class="kpi-footnote">Synchronized to clinic Google Calendar</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Spotlight: Active Patient / Next Appointment Spotlight Banner -->
+            <section class="spotlight-section" id="spotlightSection">
+                <div class="spotlight-card" id="spotlightCard">
+                    <div class="spotlight-left">
+                        <div class="spotlight-tag">
+                            <span class="tag-pulse"></span>
+                            <span id="spotlightBadgeText">NOW IN APPOINTMENT</span>
+                        </div>
+                        <h2 class="spotlight-title" id="spotlightTitle">Meeting with Patient</h2>
+                        <div class="spotlight-meta-row">
+                            <div class="spotlight-meta-item">
+                                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                <span class="meta-val" id="spotlightTimeRange">12:00 PM – 3:00 PM</span>
+                                <span class="meta-sub" id="spotlightDuration">(3 hrs)</span>
+                            </div>
+                            <div class="spotlight-meta-item">
+                                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                                <span class="meta-val" id="spotlightDate">Today, Sunday Oct 18</span>
+                            </div>
+                            <div class="spotlight-meta-item" id="spotlightClientPhoneWrap">
+                                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <a href="#" class="meta-link" id="spotlightPhone">01112733999</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="spotlight-right">
+                        <div class="spotlight-countdown-box">
+                            <span class="countdown-label" id="spotlightCountdownLabel">Status</span>
+                            <span class="countdown-val" id="spotlightCountdownVal">In Progress</span>
+                        </div>
+                        <div class="spotlight-actions">
+                            <a href="#" target="_blank" rel="noopener noreferrer" class="spotlight-action-btn primary" id="spotlightGoogleLink">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                <span>Google Calendar</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Clinic Schedule Timeline Matrix Strip -->
+            <section class="timeline-strip-section" id="timelineStripSection">
+                <div class="timeline-strip-header">
+                    <div class="timeline-strip-title">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="10" y1="6" x2="21" y2="6"/>
+                            <line x1="10" y1="12" x2="21" y2="12"/>
+                            <line x1="10" y1="18" x2="21" y2="18"/>
+                            <polyline points="3 6 4 7 6 5"/>
+                            <polyline points="3 12 4 13 6 11"/>
+                            <polyline points="3 18 4 19 6 17"/>
+                        </svg>
+                        <span>Clinic Hours Agenda (9:00 AM – 6:00 PM)</span>
+                    </div>
+                    <span class="timeline-strip-note" id="timelineSlotSummary">Active appointment slots today</span>
+                </div>
+                <div class="timeline-hours-bar" id="timelineHoursBar">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </section>
+
+            <!-- Control Toolbar (Filter tabs, Search, Date Picker, View Switcher) -->
+            <section class="toolbar-section">
+                <div class="toolbar-left">
+                    <nav class="filter-tabs" id="filterTabsNav" aria-label="Appointment filter tabs">
+                        <button class="filter-tab active" data-filter="all">
+                            <span>All Appointments</span>
+                            <span class="tab-badge" id="tabBadgeAll">0</span>
+                        </button>
+                        <button class="filter-tab" data-filter="today">
+                            <span>Today</span>
+                            <span class="tab-badge" id="tabBadgeToday">0</span>
+                        </button>
+                        <button class="filter-tab" data-filter="upcoming">
+                            <span>Upcoming</span>
+                            <span class="tab-badge" id="tabBadgeUpcoming">0</span>
+                        </button>
+                        <button class="filter-tab" data-filter="past">
+                            <span>Past Visits</span>
+                            <span class="tab-badge" id="tabBadgePast">0</span>
+                        </button>
+                        <button class="filter-tab" data-filter="cancelled">
+                            <span>Cancelled</span>
+                            <span class="tab-badge" id="tabBadgeCancelled">0</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <div class="toolbar-right">
+                    <!-- Search Input -->
+                    <div class="search-input-wrap">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Search patient, doctor, phone..." aria-label="Search appointments">
+                        <button class="clear-search-btn" id="clearSearchBtn" title="Clear search" style="display:none;">&times;</button>
+                    </div>
+
+                    <!-- Date Picker Filter -->
+                    <div class="date-filter-wrap">
+                        <svg class="date-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <input type="date" id="dateFilterInput" title="Filter by appointment date" aria-label="Filter by appointment date">
+                        <button class="clear-date-btn" id="clearDateBtn" title="Reset date filter" style="display:none;">Reset</button>
+                    </div>
+
+                    <!-- View Switcher -->
+                    <div class="view-switch-group">
+                        <button class="view-btn active" id="viewCardsBtn" title="Cards View" aria-label="Card View">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"/>
+                                <rect x="14" y="3" width="7" height="7"/>
+                                <rect x="14" y="14" width="7" height="7"/>
+                                <rect x="3" y="14" width="7" height="7"/>
+                            </svg>
+                        </button>
+                        <button class="view-btn" id="viewTableBtn" title="Table View" aria-label="Table View">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="8" y1="6" x2="21" y2="6"/>
+                                <line x1="8" y1="12" x2="21" y2="12"/>
+                                <line x1="8" y1="18" x2="21" y2="18"/>
+                                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                                <line x1="3" y1="18" x2="3.01" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Summary Strip -->
+            <div class="results-strip" id="resultsStrip">
+                <span id="resultsCountText">Showing 0 appointments</span>
+                <span class="active-filter-indicator" id="activeFilterBadge">All</span>
+            </div>
+
+            <!-- Appointments Container: Cards Grid -->
+            <section class="meetings-grid-view" id="meetingsGridView" aria-label="Appointments Cards Grid">
+                <!-- Cards rendered dynamically -->
+            </section>
+
+            <!-- Appointments Container: Table View -->
+            <section class="meetings-table-view" id="meetingsTableView" style="display:none;" aria-label="Appointments Table View">
+                <div class="table-glass-wrap">
+                    <table class="meetings-table" id="meetingsTable">
+                        <thead>
+                            <tr>
+                                <th>Date & Day</th>
+                                <th>Appointment Time & Duration</th>
+                                <th>Patient Name</th>
+                                <th>Consultation / Details</th>
+                                <th>Contact Info</th>
+                                <th>Google Calendar</th>
+                                <th>Status</th>
+                                <th class="text-right">Origin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meetingsTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Empty State -->
+            <section class="empty-state-view" id="emptyStateView" style="display:none;">
+                <div class="empty-icon-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                        <line x1="10" y1="14" x2="14" y2="18"/>
+                        <line x1="14" y1="14" x2="10" y2="18"/>
+                    </svg>
+                </div>
+                <h3 class="empty-title">No Appointments Found</h3>
+                <p class="empty-subtext" id="emptySubtext">There are no patient appointments matching this filter.</p>
+            </section>
+        </main>
+
+        <!-- Dental Clinic Reception Footer -->
+        <footer class="dashboard-footer">
+            <div class="footer-left">
+                <span class="footer-brand">Nova Dental Clinic Reception</span>
+                <span class="footer-sep">•</span>
+                <span class="footer-tech">AI Patient Scheduling & Google Calendar Synchronization</span>
+            </div>
+            <div class="footer-right">
+                <span id="lastUpdatedTimestamp">Last updated: Just now</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- Drawer: Receptionist Patient Call Logs & Messages       -->
+    <!-- ======================================================== -->
+    <div class="drawer-overlay" id="activityDrawerOverlay" aria-hidden="true">
+        <aside class="activity-drawer" id="activityDrawer">
+            <div class="drawer-header">
+                <div class="drawer-title-wrap">
+                    <div class="modal-icon teal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="drawer-title">Front-Desk Patient Inquiries</h3>
+                        <p class="drawer-sub">Patient calls & messages handled by Nova</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closeDrawerBtn" aria-label="Close drawer">&times;</button>
+            </div>
+
+            <!-- Drawer Tabs -->
+            <div class="drawer-tabs">
+                <button class="drawer-tab active" id="drawerCallsTab">Call Records (<span id="drawerCallCount">0</span>)</button>
+                <button class="drawer-tab" id="drawerNotesTab">Patient Messages (<span id="drawerNoteCount">0</span>)</button>
+            </div>
+
+            <!-- Drawer Content Sections -->
+            <div class="drawer-scroll-content">
+                <div id="drawerCallsList" class="drawer-list">
+                    <!-- Populated dynamically -->
+                </div>
+                <div id="drawerNotesList" class="drawer-list" style="display:none;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/dashboard.js?v=dental2"></script>
+</body>
+</html>
